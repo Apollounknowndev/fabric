@@ -27,6 +27,7 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.Drawable;
 import net.minecraft.client.gui.screen.GameMenuScreen;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.screen.TitleScreen;
 import net.minecraft.client.gui.screen.ingame.CreativeInventoryScreen;
 import net.minecraft.client.gui.screen.ingame.InventoryScreen;
 import net.minecraft.client.gui.screen.multiplayer.ConnectScreen;
@@ -44,6 +45,7 @@ import net.minecraft.text.Text;
 
 import net.fabricmc.fabric.test.base.client.mixin.CyclingButtonWidgetAccessor;
 import net.fabricmc.fabric.test.base.client.mixin.ScreenAccessor;
+import net.fabricmc.fabric.test.base.client.mixin.TitleScreenAccessor;
 import net.fabricmc.loader.api.FabricLoader;
 
 // Provides thread safe utils for interacting with a running game.
@@ -80,8 +82,12 @@ public final class FabricClientTestHelper {
 	}
 
 	public static void takeScreenshot(String name) {
+		takeScreenshot(name, Duration.ofMillis(50));
+	}
+
+	public static void takeScreenshot(String name, Duration delay) {
 		// Allow time for any screens to open
-		waitFor(Duration.ofSeconds(1));
+		waitFor(delay);
 
 		submitAndWait(client -> {
 			ScreenshotRecorder.saveScreenshot(FabricLoader.getInstance().getGameDir().toFile(), name + ".png", client.getFramebuffer(), (message) -> {
@@ -166,6 +172,16 @@ public final class FabricClientTestHelper {
 		});
 	}
 
+	public static void waitForTitleScreenFade() {
+		waitFor("Title screen fade", client -> {
+			if (!(client.currentScreen instanceof TitleScreen titleScreen)) {
+				return false;
+			}
+
+			return !((TitleScreenAccessor) titleScreen).getDoBackgroundFade();
+		});
+	}
+
 	private static void waitFor(String what, Predicate<MinecraftClient> predicate) {
 		waitFor(what, predicate, Duration.ofSeconds(10));
 	}
@@ -184,7 +200,7 @@ public final class FabricClientTestHelper {
 				throw new RuntimeException("Timed out waiting for " + what);
 			}
 
-			waitFor(Duration.ofSeconds(1));
+			waitFor(Duration.ofMillis(50));
 		}
 	}
 

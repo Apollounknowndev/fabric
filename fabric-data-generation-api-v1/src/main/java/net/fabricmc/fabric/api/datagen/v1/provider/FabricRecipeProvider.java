@@ -39,6 +39,7 @@ import net.minecraft.data.server.recipe.RecipeGenerator;
 import net.minecraft.data.server.recipe.ShapedRecipeJsonBuilder;
 import net.minecraft.data.server.recipe.ShapelessRecipeJsonBuilder;
 import net.minecraft.recipe.Recipe;
+import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.RegistryKeys;
 import net.minecraft.registry.RegistryOps;
 import net.minecraft.registry.RegistryWrapper;
@@ -77,9 +78,9 @@ public abstract class FabricRecipeProvider extends RecipeGenerator.RecipeProvide
 		Preconditions.checkArgument(conditions.length > 0, "Must add at least one condition.");
 		return new RecipeExporter() {
 			@Override
-			public void accept(Identifier identifier, Recipe<?> recipe, @Nullable AdvancementEntry advancementEntry) {
+			public void accept(RegistryKey<Recipe<?>> key, Recipe<?> recipe, @Nullable AdvancementEntry advancementEntry) {
 				FabricDataGenHelper.addConditions(recipe, conditions);
-				exporter.accept(identifier, recipe, advancementEntry);
+				exporter.accept(key, recipe, advancementEntry);
 			}
 
 			@Override
@@ -98,10 +99,10 @@ public abstract class FabricRecipeProvider extends RecipeGenerator.RecipeProvide
 		return registriesFuture.thenCompose((wrapperLookup -> {
 			Set<Identifier> generatedRecipes = Sets.newHashSet();
 			List<CompletableFuture<?>> list = new ArrayList<>();
-			getRecipeGenerator(wrapperLookup, new RecipeExporter() {
+			RecipeGenerator recipeGenerator = getRecipeGenerator(wrapperLookup, new RecipeExporter() {
 				@Override
-				public void accept(Identifier recipeId, Recipe<?> recipe, @Nullable AdvancementEntry advancement) {
-					Identifier identifier = getRecipeIdentifier(recipeId);
+				public void accept(RegistryKey<Recipe<?>> recipeKey, Recipe<?> recipe, @Nullable AdvancementEntry advancement) {
+					Identifier identifier = getRecipeIdentifier(recipeKey.getValue());
 
 					if (!generatedRecipes.add(identifier)) {
 						throw new IllegalStateException("Duplicate recipe " + identifier);
@@ -134,6 +135,7 @@ public abstract class FabricRecipeProvider extends RecipeGenerator.RecipeProvide
 				public void addRootAdvancement() {
 				}
 			});
+			recipeGenerator.generate();
 			return CompletableFuture.allOf(list.toArray(CompletableFuture[]::new));
 		}));
 	}

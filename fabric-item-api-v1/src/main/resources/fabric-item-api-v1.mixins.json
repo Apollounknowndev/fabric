@@ -6,6 +6,9 @@
     "AbstractFurnaceBlockEntityMixin",
     "AnvilScreenHandlerMixin",
     "BrewingStandBlockEntityMixin",
+    "ComponentMapBuilderMixin",
+    "CraftingRecipeMixin",
+    "EnchantmentBuilderAccessor",
     "EnchantCommandMixin",
     "EnchantmentHelperMixin",
     "EnchantRandomlyLootFunctionMixin",
@@ -14,8 +17,8 @@
     "ItemSettingsMixin",
     "ItemStackMixin",
     "LivingEntityMixin",
-    "RecipeMixin",
-    "RegistriesMixin"
+    "RegistriesMixin",
+    "RegistryLoaderMixin"
   ],
   "injectors": {
     "defaultRequire": 1

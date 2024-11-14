@@ -27,6 +27,7 @@ import static net.fabricmc.fabric.test.base.client.FabricClientTestHelper.submit
 import static net.fabricmc.fabric.test.base.client.FabricClientTestHelper.takeScreenshot;
 import static net.fabricmc.fabric.test.base.client.FabricClientTestHelper.waitForLoadingComplete;
 import static net.fabricmc.fabric.test.base.client.FabricClientTestHelper.waitForScreen;
+import static net.fabricmc.fabric.test.base.client.FabricClientTestHelper.waitForTitleScreenFade;
 import static net.fabricmc.fabric.test.base.client.FabricClientTestHelper.waitForWorldTicks;
 
 import java.io.IOException;
@@ -34,6 +35,7 @@ import java.io.UncheckedIOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 
 import com.mojang.authlib.GameProfile;
 import org.spongepowered.asm.mixin.MixinEnvironment;
@@ -83,7 +85,8 @@ public class FabricApiAutoTestClient implements ClientModInitializer {
 
 		{
 			waitForScreen(TitleScreen.class);
-			takeScreenshot("title_screen");
+			waitForTitleScreenFade();
+			takeScreenshot("title_screen", Duration.ZERO);
 			clickScreenButton("menu.singleplayer");
 		}
 
@@ -110,7 +113,7 @@ public class FabricApiAutoTestClient implements ClientModInitializer {
 		{
 			enableDebugHud();
 			waitForWorldTicks(200);
-			takeScreenshot("in_game_overworld");
+			takeScreenshot("in_game_overworld", Duration.ZERO);
 		}
 
 		MixinEnvironment.getCurrentEnvironment().audit();
@@ -144,7 +147,7 @@ public class FabricApiAutoTestClient implements ClientModInitializer {
 			server.runCommand("gamemode creative " + profile.getName());
 
 			waitForWorldTicks(20);
-			takeScreenshot("server_in_game");
+			takeScreenshot("server_in_game", Duration.ZERO);
 
 			{ // Test that we can enter and exit configuration
 				server.runCommand("debugconfig config " + profile.getName());

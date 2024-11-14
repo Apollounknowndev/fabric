@@ -147,6 +147,11 @@ public class RegistrySyncTest implements ModInitializer {
 			return;
 		}
 
+		if (registry.getValue().equals(Identifier.of("recipe_serializer"))) {
+			// Recipe serializers are not synced, as there is an unused codec left over.
+			return;
+		}
+
 		if (!RegistryAttributeHolder.get(registry).hasAttribute(RegistryAttribute.SYNCED)) {
 			throw new IllegalStateException("Registry " + registry.getValue() + " is not marked as SYNCED!");
 		}
@@ -159,7 +164,7 @@ public class RegistrySyncTest implements ModInitializer {
 			Registry.register(Registries.BLOCK, id, block);
 
 			if (REGISTER_ITEMS) {
-				BlockItem blockItem = new BlockItem(block, new Item.Settings());
+				BlockItem blockItem = new BlockItem(block, new Item.Settings().registryKey(RegistryKey.of(RegistryKeys.ITEM, id)));
 				Registry.register(Registries.ITEM, id, blockItem);
 			}
 		}

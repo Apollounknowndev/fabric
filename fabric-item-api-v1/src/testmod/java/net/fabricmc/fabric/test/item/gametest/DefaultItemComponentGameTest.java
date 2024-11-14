@@ -20,6 +20,7 @@ import java.util.function.Consumer;
 
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.FireworksComponent;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.test.GameTest;
@@ -71,6 +72,22 @@ public class DefaultItemComponentGameTest implements FabricGameTest {
 			throw new GameTestException("Enchantment glint override not set on gold nugget");
 		}
 
+		context.complete();
+	}
+
+	@GameTest(templateName = EMPTY_STRUCTURE)
+	public void diamondPickaxeIsRenamed(TestContext context) {
+		Item testItem = Items.DIAMOND_PICKAXE;
+		ItemStack stack = testItem.getDefaultStack();
+
+		String itemName = stack.getName().getString();
+		String expectedName = "Modified Diamond Pickaxe";
+
+		String errorMessage = "Expected '%s' to be contained in '%s', but it was not!";
+
+		// if they contain each other, then they are equal
+		context.assertTrue(itemName.contains(expectedName), errorMessage.formatted(expectedName, itemName));
+		context.assertTrue(expectedName.contains(itemName), errorMessage.formatted(itemName, expectedName));
 		context.complete();
 	}
 }

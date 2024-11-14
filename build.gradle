@@ -4,7 +4,7 @@ plugins {
 	id "idea"
 	id "maven-publish"
 	id 'jacoco'
-	id "fabric-loom" version "1.7.3" apply false
+	id "fabric-loom" version "1.8.11" apply false
 	id "com.diffplug.spotless" version "6.20.0"
 	id "org.ajoberstar.grgit" version "5.2.2"
 	id "me.modmuss50.remotesign" version "0.4.0" apply false
@@ -242,7 +242,7 @@ allprojects {
 
 		testImplementation "net.fabricmc:fabric-loader-junit:${project.loader_version}"
 		testImplementation sourceSets.testmodClient.output
-		testImplementation 'org.mockito:mockito-core:5.4.0'
+		testImplementation 'org.mockito:mockito-core:5.13.0'
 	}
 
 	test {
@@ -271,6 +271,8 @@ allprojects {
 	}
 
 	spotless {
+		lineEndings = com.diffplug.spotless.LineEnding.UNIX
+
 		java {
 			licenseHeaderFile(rootProject.file("HEADER"))
 			removeUnusedImports()
@@ -329,6 +331,7 @@ allprojects {
 		addNestedDependencies = false
 		includesClientOnlyClasses = true
 		clientOnlySourceSetName = sourceSets.testmodClient.name
+		classpath.from(sourceSets.testmodClient.compileClasspath)
 	}
 	build.dependsOn remapTestmodJar
 

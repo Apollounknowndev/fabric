@@ -113,10 +113,11 @@ public class VanillaStorageTests {
 		InventoryStorage storage = InventoryStorage.of(inventory, null);
 
 		BlockPos comparatorPos = new BlockPos(1, 2, 0);
+		Direction comparatorFacing = context.getRotation().rotate(Direction.WEST);
 		// support block under the comparator
 		context.setBlockState(comparatorPos.offset(Direction.DOWN), Blocks.GREEN_WOOL.getDefaultState());
 		// comparator
-		context.setBlockState(comparatorPos, Blocks.COMPARATOR.getDefaultState().with(ComparatorBlock.FACING, Direction.WEST));
+		context.setBlockState(comparatorPos, Blocks.COMPARATOR.getDefaultState().with(ComparatorBlock.FACING, comparatorFacing));
 
 		try (Transaction transaction = Transaction.openOuter()) {
 			if (world.getBlockTickScheduler().isQueued(context.getAbsolutePos(comparatorPos), Blocks.COMPARATOR)) {
@@ -288,7 +289,7 @@ public class VanillaStorageTests {
 	 */
 	@GameTest(templateName = "fabric-transfer-api-v1-testmod:double_chest_comparators", skyAccess = true)
 	public void testDoubleChestComparator(TestContext context) {
-		BlockPos chestPos = new BlockPos(2, 2, 2);
+		BlockPos chestPos = new BlockPos(2, 1, 2);
 		Storage<ItemVariant> storage = ItemStorage.SIDED.find(context.getWorld(), context.getAbsolutePos(chestPos), Direction.UP);
 		context.assertTrue(storage != null, "Storage must not be null");
 

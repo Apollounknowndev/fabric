@@ -39,6 +39,7 @@ import net.minecraft.registry.RegistryKeys;
 import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.registry.tag.ItemTags;
+import net.minecraft.registry.tag.TagKey;
 import net.minecraft.resource.featuretoggle.FeatureFlags;
 import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
@@ -54,6 +55,7 @@ import net.fabricmc.fabric.api.registry.CompostingChanceRegistry;
 import net.fabricmc.fabric.api.registry.FabricBrewingRecipeRegistryBuilder;
 import net.fabricmc.fabric.api.registry.FlammableBlockRegistry;
 import net.fabricmc.fabric.api.registry.FlattenableBlockRegistry;
+import net.fabricmc.fabric.api.registry.FuelRegistryEvents;
 import net.fabricmc.fabric.api.registry.LandPathNodeTypesRegistry;
 import net.fabricmc.fabric.api.registry.OxidizableBlocksRegistry;
 import net.fabricmc.fabric.api.registry.SculkSensorFrequencyRegistry;
@@ -62,9 +64,18 @@ import net.fabricmc.fabric.api.registry.TillableBlockRegistry;
 import net.fabricmc.fabric.api.registry.VillagerInteractionRegistries;
 
 public final class ContentRegistryTest implements ModInitializer {
+	public static final String MOD_ID = "fabric-content-registries-v0-testmod";
 	public static final Logger LOGGER = LoggerFactory.getLogger(ContentRegistryTest.class);
 
-	public static final Identifier TEST_EVENT_ID = Identifier.of("fabric-content-registries-v0-testmod", "test_event");
+	public static final Item SMELTING_FUEL_INCLUDED_BY_ITEM = registerItem("smelting_fuel_included_by_item");
+	public static final Item SMELTING_FUEL_INCLUDED_BY_TAG = registerItem("smelting_fuel_included_by_tag");
+	public static final Item SMELTING_FUEL_EXCLUDED_BY_TAG = registerItem("smelting_fuel_excluded_by_tag");
+	public static final Item SMELTING_FUEL_EXCLUDED_BY_VANILLA_TAG = registerItem("smelting_fuel_excluded_by_vanilla_tag");
+
+	private static final TagKey<Item> SMELTING_FUELS_INCLUDED_BY_TAG = itemTag("smelting_fuels_included_by_tag");
+	private static final TagKey<Item> SMELTING_FUELS_EXCLUDED_BY_TAG = itemTag("smelting_fuels_excluded_by_tag");
+
+	public static final Identifier TEST_EVENT_ID = id("test_event");
 	public static final RegistryKey<Block> TEST_EVENT_BLOCK_KEY = RegistryKey.of(RegistryKeys.BLOCK, TEST_EVENT_ID);
 	public static final RegistryEntry.Reference<GameEvent> TEST_EVENT = Registry.registerReference(Registries.GAME_EVENT, TEST_EVENT_ID, new GameEvent(GameEvent.DEFAULT_RANGE));
 
@@ -75,8 +86,7 @@ public final class ContentRegistryTest implements ModInitializer {
 		//  - diamond block is now flammable
 		//  - sand is now flammable
 		//  - red wool is flattenable to yellow wool
-		//  - obsidian is now fuel
-		//  - all items with the tag 'minecraft:dirt' are now fuel
+		//  - custom items prefixed with 'smelting fuels included by' are valid smelting fuels
 		//  - dead bush is now considered as a dangerous block like sweet berry bushes (all entities except foxes should avoid it)
 		//  - quartz pillars are strippable to hay blocks
 		//  - green wool is tillable to lime wool
@@ -87,13 +97,23 @@ public final class ContentRegistryTest implements ModInitializer {
 		//  - assign a loot table to the nitwit villager type
 		//  - right-clicking a 'test_event' block will emit a 'test_event' game event, which will have a sculk sensor frequency of 2
 		//  - instant health potions can be brewed from awkward potions with any item in the 'minecraft:small_flowers' tag
-		//  - if Bundle experiment is enabled, luck potions can be brewed from awkward potions with a bundle
+		//  - if Redstone Experiments experiment is enabled, luck potions can be brewed from awkward potions with a bundle
 		//  - dirty potions can be brewed by adding any item in the 'minecraft:dirt' tag to any standard potion
 
 		CompostingChanceRegistry.INSTANCE.add(Items.OBSIDIAN, 0.5F);
 		FlammableBlockRegistry.getDefaultInstance().add(Blocks.DIAMOND_BLOCK, 4, 4);
 		FlammableBlockRegistry.getDefaultInstance().add(BlockTags.SAND, 4, 4);
 		FlattenableBlockRegistry.register(Blocks.RED_WOOL, Blocks.YELLOW_WOOL.getDefaultState());
+
+		FuelRegistryEvents.BUILD.register((builder, context) -> {
+			builder.add(SMELTING_FUEL_INCLUDED_BY_ITEM, context.baseSmeltTime() / 4);
+			builder.add(SMELTING_FUELS_INCLUDED_BY_TAG, context.baseSmeltTime() / 2);
+		});
+
+		FuelRegistryEvents.EXCLUSIONS.register((builder, context) -> {
+			builder.remove(SMELTING_FUELS_EXCLUDED_BY_TAG);
+		});
+
 		LandPathNodeTypesRegistry.register(Blocks.DEAD_BUSH, PathNodeType.DAMAGE_OTHER, PathNodeType.DANGER_OTHER);
 		StrippableBlockRegistry.register(Blocks.QUARTZ_PILLAR, Blocks.HAY_BLOCK);
 
@@ -150,9 +170,9 @@ public final class ContentRegistryTest implements ModInitializer {
 			LOGGER.info("SculkSensorFrequencyRegistry test passed!");
 		}
 
-		var dirtyPotion = new DirtyPotionItem(new Item.Settings().maxCount(1));
-		Registry.register(Registries.ITEM, Identifier.of("fabric-content-registries-v0-testmod", "dirty_potion"),
-				dirtyPotion);
+		RegistryKey<Item> dirtyPotionKey = RegistryKey.of(RegistryKeys.ITEM, id("dirty_potion"));
+		var dirtyPotion = new DirtyPotionItem(new Item.Settings().maxCount(1).registryKey(dirtyPotionKey));
+		Registry.register(Registries.ITEM, dirtyPotionKey, dirtyPotion);
 		/* Mods should use BrewingRecipeRegistry.registerPotionType(Item), which is access widened by fabric-transitive-access-wideners-v1
 		 * This testmod uses an accessor due to Loom limitations that prevent TAWs from applying across Gradle subproject boundaries */
 		FabricBrewingRecipeRegistryBuilder.BUILD.register(builder -> {
@@ -160,7 +180,7 @@ public final class ContentRegistryTest implements ModInitializer {
 			builder.registerItemRecipe(Items.POTION, Ingredient.fromTag(Registries.ITEM.getOrThrow(ItemTags.DIRT)), dirtyPotion);
 			builder.registerPotionRecipe(Potions.AWKWARD, Ingredient.fromTag(Registries.ITEM.getOrThrow(ItemTags.SMALL_FLOWERS)), Potions.HEALING);
 
-			if (builder.getEnabledFeatures().contains(FeatureFlags.BUNDLE)) {
+			if (builder.getEnabledFeatures().contains(FeatureFlags.REDSTONE_EXPERIMENTS)) {
 				builder.registerPotionRecipe(Potions.AWKWARD, Ingredient.ofItems(Items.BUNDLE), Potions.LUCK);
 			}
 		});
@@ -188,5 +208,18 @@ public final class ContentRegistryTest implements ModInitializer {
 		public Text getName(ItemStack stack) {
 			return Text.literal("Dirty ").append(Items.POTION.getName(stack));
 		}
+	}
+
+	private static Identifier id(String path) {
+		return Identifier.of(MOD_ID, path);
+	}
+
+	private static Item registerItem(String path) {
+		RegistryKey<Item> key = RegistryKey.of(RegistryKeys.ITEM, id(path));
+		return Registry.register(Registries.ITEM, key, new Item(new Item.Settings().registryKey(key)));
+	}
+
+	private static TagKey<Item> itemTag(String path) {
+		return TagKey.of(RegistryKeys.ITEM, id(path));
 	}
 }
