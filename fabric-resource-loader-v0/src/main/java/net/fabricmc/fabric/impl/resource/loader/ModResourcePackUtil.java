@@ -122,18 +122,18 @@ public final class ModResourcePackUtil {
 		if (array == null) return;
 
 		switch (array.getType()) {
-			case STRING -> modIds.add(array.getAsString());
-			case ARRAY -> {
-				for (CustomValue id : array.getAsArray()) {
-					if (id.getType() == CustomValue.CvType.STRING) {
-						modIds.add(id.getAsString());
-					}
+		case STRING -> modIds.add(array.getAsString());
+		case ARRAY -> {
+			for (CustomValue id : array.getAsArray()) {
+				if (id.getType() == CustomValue.CvType.STRING) {
+					modIds.add(id.getAsString());
 				}
 			}
-			default -> {
-				LOGGER.error("[Fabric] {} should be a string or an array", order.jsonKey);
-				return;
-			}
+		}
+		default -> {
+			LOGGER.error("[Fabric] {} should be a string or an array", order.jsonKey);
+			return;
+		}
 		}
 
 		modIds.stream().filter(allIds::contains).forEach(modId -> sorter.addLoadOrdering(modId, currentId, order));
