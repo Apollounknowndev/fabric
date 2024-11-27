@@ -100,12 +100,15 @@ public final class ModResourcePackUtil {
 			sorter.addPack(pack);
 
 			CustomValue loadOrder = metadata.getCustomValue(LOAD_ORDER_KEY);
+			if (loadOrder == null) continue;
 
-			if (loadOrder != null && loadOrder.getType() == CustomValue.CvType.OBJECT) {
+			if (loadOrder.getType() == CustomValue.CvType.OBJECT) {
 				CustomValue.CvObject object = loadOrder.getAsObject();
 
 				addLoadOrdering(object, allIds, sorter, Order.BEFORE, id);
 				addLoadOrdering(object, allIds, sorter, Order.AFTER, id);
+			} else {
+				LOGGER.error("[Fabric] Resource load order should be an object");
 			}
 		}
 
@@ -114,13 +117,22 @@ public final class ModResourcePackUtil {
 
 	public static void addLoadOrdering(CustomValue.CvObject object, List<String> allIds, ModResourcePackSorter sorter, Order order, String currentId) {
 		List<String> modIds = new ArrayList<>();
-		CustomValue array = object.get(order.jsonKey);
 
-		if (array != null && array.getType() == CustomValue.CvType.ARRAY) {
-			for (CustomValue id : array.getAsArray()) {
-				if (id.getType() == CustomValue.CvType.STRING) {
-					modIds.add(id.getAsString());
+		CustomValue array = object.get(order.jsonKey);
+		if (array == null) return;
+
+		switch (array.getType()) {
+			case STRING -> modIds.add(array.getAsString());
+			case ARRAY -> {
+				for (CustomValue id : array.getAsArray()) {
+					if (id.getType() == CustomValue.CvType.STRING) {
+						modIds.add(id.getAsString());
+					}
 				}
+			}
+			default -> {
+				LOGGER.error("[Fabric] {} should be a string or an array", order.jsonKey);
+				return;
 			}
 		}
 

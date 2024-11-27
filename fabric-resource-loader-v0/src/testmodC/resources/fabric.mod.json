@@ -10,9 +10,7 @@
   },
   "custom": {
     "fabric:resource_load_order": {
-      "after": [
-        "fabric-resource-loader-v0-testmod-b"
-      ]
+      "after": "fabric-resource-loader-v0-testmod-b"
     }
   }
 }
