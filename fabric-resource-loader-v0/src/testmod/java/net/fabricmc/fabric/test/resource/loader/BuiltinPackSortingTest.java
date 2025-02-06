@@ -36,6 +36,7 @@ public class BuiltinPackSortingTest {
 	@GameTest
 	public void builtinPackSorting(TestContext context) {
 		ServerRecipeManager manager = context.getWorld().getRecipeManager();
+
 		if (manager.get(recipe("disabled_by_b")).isPresent()) {
 			throw context.createError(Text.literal("disabled_by_b recipe should not have been loaded."));
 		}
